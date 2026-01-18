@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Parking Dashboard</title>
+    <style>
+        body { font-family: Arial; text-align: center; }
+        table { margin: auto; border-collapse: collapse; width: 50%; }
+        th, td { border: 1px solid #ccc; padding: 10px; }
+        .Available { background-color: #7CFC00; } /* Green */
+        .Occupied { background-color: #FF6347; }  /* Red */
+    </style>
+</head>
+<body>
+    <h1>Smart Parking Dashboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Slot ID</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody id="parking-table">
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('http://<VM-EX-IP>:5000/api/parking');
+                const data = await response.json();
+                const tbody = document.getElementById('parking-table');
+                tbody.innerHTML = '';
+
+                // Keep only the latest entry per slot
+                const latestSlots = {};
+                data.forEach(slot => {
+                    latestSlots[slot.slot_id] = slot;
+                });
+
+                Object.values(latestSlots).forEach(slot => {
+                    const row = document.createElement('tr');
+                    const statusClass = slot.status === "free" ? "Available" : slot.status;
+                    row.innerHTML = `
+                        <td>${slot.slot_id}</td>
+                        <td class="${statusClass}">${slot.status}</td>
+                        <td>${slot.timestamp || '-'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Error fetching data:', err);
+            }
+        }
+
+        fetchData();
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
